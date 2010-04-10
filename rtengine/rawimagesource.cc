@@ -2223,7 +2223,7 @@ ColorTemp RawImageSource::getSpotWB (std::vector<Coord2D> red, std::vector<Coord
 #define FORCC for (c=0; c < colors; c++)
 #define fc(row,col) \
 	(ri->prefilters >> ((((row) << 1 & 14) + ((col) & 1)) << 1) & 3)
-typedef unsigned short ushort;
+//typedef unsigned short ushort;
 void RawImageSource::vng4_demosaic () {
 
   static const signed char *cp, terms[] = {
@@ -2588,7 +2588,8 @@ void RawImageSource::ahd_demosaic()
   lab  = (short (*)[TS][TS][3])(buffer + 12*TS*TS);
   homo = (char  (*)[TS][TS])   (buffer + 24*TS*TS);
 
-  for (top=2; top < height-5; top += TS-6)
+  for (top=2; top < height-5; top += TS-6) {
+    if(plistener) plistener->setProgress (1.0 * top / height);
     for (left=2; left < width-5; left += TS-6) {
 
 /*  Interpolate green horizontally and vertically:		*/
@@ -2605,7 +2606,6 @@ void RawImageSource::ahd_demosaic()
 	}
       }
 
-    if(plistener) plistener->setProgress (0.33);
 /*  Interpolate red and blue, and convert to CIELab:		*/
       for (d=0; d < 2; d++)
 	for (row=top+1; row < top+TS-1 && row < height-3; row++)
@@ -2642,7 +2642,6 @@ void RawImageSource::ahd_demosaic()
 	    lix[0][2] = 64 * 200 * (xyz[1] - xyz[2]);
 	  }
 
-      if(plistener) plistener->setProgress (0.5);
 /*  Build homogeneity maps from the CIELab images:		*/
       memset (homo, 0, 2*TS*TS);
       for (row=top+2; row < top+TS-2 && row < height-4; row++) {
@@ -2667,7 +2666,6 @@ void RawImageSource::ahd_demosaic()
 		homo[d][tr][tc]++;
 	}
       }
-      if(plistener) plistener->setProgress (0.8);
 /*  Combine the most homogenous pixels for the final result:	*/
       for (row=top+3; row < top+TS-3 && row < height-5; row++) {
 	tr = row-top;
@@ -2685,6 +2683,7 @@ void RawImageSource::ahd_demosaic()
 	}
       }
     }
+  }
   if(plistener) plistener->setProgress (1.0);
   free (buffer);
   red = new unsigned short*[H];
